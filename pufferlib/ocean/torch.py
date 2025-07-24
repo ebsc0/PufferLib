@@ -1025,3 +1025,36 @@ class Drone(nn.Module):
 
         values = self.value(hidden)
         return logits, values
+
+class Bandit(nn.Module):
+    """Simple MLP policy for the C bandit environment."""
+
+    def __init__(self, env, hidden_size=32):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.is_continuous = False
+        self.net = nn.Sequential(
+            pufferlib.pytorch.layer_init(
+                nn.Linear(env.single_observation_space.shape[0], hidden_size)
+            ),
+            nn.ReLU(),
+        )
+        self.actor = pufferlib.pytorch.layer_init(
+            nn.Linear(hidden_size, env.single_action_space.n), std=0.01
+        )
+        self.value = pufferlib.pytorch.layer_init(nn.Linear(hidden_size, 1), std=1)
+
+    def forward(self, observations, state=None):
+        hidden = self.encode_observations(observations)
+        return self.decode_actions(hidden)
+
+    def forward_train(self, x, state=None):
+        return self.forward(x, state)
+
+    def encode_observations(self, observations, state=None):
+        return self.net(observations.float())
+
+    def decode_actions(self, hidden):
+        action = self.actor(hidden)
+        value = self.value(hidden)
+        return action, value

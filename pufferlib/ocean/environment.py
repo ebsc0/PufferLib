@@ -67,10 +67,11 @@ def make_squared(distance_to_target=3, num_targets=1, buf=None, **kwargs):
     env = pufferlib.EpisodeStats(env)
     return pufferlib.emulation.GymnasiumPufferEnv(env=env, buf=buf, **kwargs)
 
-def make_bandit(num_actions=10, reward_scale=1, reward_noise=1, buf=None):
-    from . import sanity
-    env = sanity.Bandit(num_actions=num_actions, reward_scale=reward_scale,
-        reward_noise=reward_noise)
+def make_bandit(num_arms=10, reward_std=1, drift_std=0.01, buf=None, **kwargs):
+    from .bandit import bandit
+    env = bandit.Bandit(num_envs=kwargs.get('num_envs', 1), render_mode=None,
+        num_arms=num_arms, reward_std=reward_std, drift_std=drift_std,
+        history_len=kwargs.get('history_len', 512), buf=buf, seed=kwargs.get('seed', 0))
     env = pufferlib.EpisodeStats(env)
     return pufferlib.emulation.GymnasiumPufferEnv(env=env, buf=buf)
 
@@ -153,6 +154,7 @@ MAKE_FUNCTIONS = {
     'pacman': 'Pacman',
     'checkers': 'Checkers',
     'asteroids': 'Asteroids',
+    'bandit': 'Bandit',
     'spaces': make_spaces,
     'multiagent': make_multiagent,
 }
